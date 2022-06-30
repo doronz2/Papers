@@ -1,0 +1,75 @@
+\documentclass[]{paper}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\newtheorem{theorem}{Theorem}
+
+%opening
+\title{Subsenate}
+\author{Doron Zarchy}
+
+\begin{document}
+	
+	\maketitle 
+	
+					
+					
+					
+					\section{Voting}
+					The voter cannot send the vote in plaintext as it would expose its identity, hence a commitment to the vote is published (Subsenate does not expose the link between the voter and his commitment). The attestation to the vote is done via zkSNARK.   
+					The commitment is also binded to the voter's new address $pk_{new}$ that serves as the account that receive the reward after the vote.
+					
+					The voting proceeds in two phases: commitment to voter's identity and commitment to the vote.
+					Let $\mathbb{F}_p$ be a field of prime order $p$. The user compute the commitment $cm$ to voter's identity as follows:
+					
+					\begin{enumerate}
+						\item select a secret key $sk$ uniformly from $\mathbb{F}_p$
+						\item select nonces $t_1$ and $t_2$ uniformly from $\mathbb{F}_p$
+						\item computes the commitment $cm = H(v,pk_{new},t_1,t_2,u)$
+						\item sends $cm$ and $u$ to the smart contract
+					\end{enumerate}
+					
+					The actual voting is done by publishing a vote commitment $c_v$ that is computed as  $c_v= H(sk,v,SR,u,pk_{new})$ where 
+					\begin{enumerate}
+						\item $v\in V$ is the vote. 
+						\item $pk_{new}$ is a derivation from the new public key (for the subsequent address), i.e., $pk_{new} = g^{sk}$, where $g\in \mathbb{G}$ is a generator of a multiplicative group
+						\item select $u$ uniformly from  $\mathbb{F}_p$. $u$ is a nullifier which guarantees that all votes are unique (similar to the use in Zcash)
+						\item $SR$ is a serial number of the election
+					\end{enumerate}
+					
+					
+					\subsection{Selecting the Subset}
+					A user is considered as eligible voter if $H(S,t_1)<R$ where $t_1$ is the nonce that the user committed to in phase one, and S is a random seed. S should be secure against a manipulation of an adversary.  To guarantee this security it is computed by multiple parties as follows:
+					\begin{enumerate}
+						\item k users publish their commitment $c_1,...,c_k$ (which are hashes of random values) at  time interval $[T_1,T_2]$ (where $T_1$ and $T_2$ are determined by the smart contract of the election creator)
+						\item users publish $o_1,...,o_l$  which are the preimages, WLOG, of $c_1,...,c_l$, at time intervals $[T_3,T_4]$ 
+						\item each miner computes $S= H(o_1,...,o_l)$, where H is some collision resistant hash function.
+					\end{enumerate}
+					
+					\subsection{zkSNARK statement}
+					The voter generates a zkSNARK proof $\Pi = (\Pi_1,\Pi_2,\Pi_3,\Pi_4)$ for the following four NP statements:
+					\begin{enumerate}
+						\item $cm = H(sk,t_1,t_2)$ where $cm$ is the commitment published in the smart contract when the voter registers the election. The voter proves her identity by showing that she knows random nonces $t_1$ and $t_2$. 
+						\item $c_v= H(sk,v,SR,u,pk_{new})$, the commitment to the vote $v$ also includes the secret key of the voter, the serial number of the vote, the nullifier, and the public address for which assets from deposit should be transferred.
+						\item $Root = \mathbb{H}(mp, cm)$. Proving that $cm$ is a member in the set of commitments by proving that the Merkle root is a result of the hashing $cm$ and the witness (Merkle path) . The Merkle root is public.
+						\item $H(S,t_1)<R$ proves that the voter is eligible.
+					\end{enumerate}
+					where the public input is:
+					\begin{enumerate}
+						\item Root: Merkle root of the commitment set
+						\item u: a nullifier
+						\item v: vote  
+						\item $pk_{new}$: voter's new address
+						\item N: expected number of voters
+						\item S: random seed
+						\item SR: serial number of the vote
+					\end{enumerate}	
+					the private input:
+					\begin{enumerate}
+						\item cm: commitment to the vote
+						\item mp: a Merkle path from cm to root
+						\item $t_1$ and $t_2$: random nonce
+						\item sk: private key (but not used for signature)
+					\end{enumerate}	
+					The sender can simply send the proof $\Pi$ along with nullifier $u$, vote $v$, and the serial number of the election. Note that  in Ethereum like systems where the sender's address is part of the transaction, the transaction can be used to break anonymity. Therefore a mixed network is required (a simpler solution use a coordinator which acts as an address that obfuscate the voters's addresses, where the coordinator establishes an offchain connection with the voter which allows the voter to send the proof privately to the coordinator who then publishes the proof).     
+					
+\end{document}

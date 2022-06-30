@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\begin{document}
+	
+\[
+\begin{array}{c c c}
+\text{\textsf{Prover}} & & \text{\textsf{Verifier}} \\
+(x = \log_g h) & & \\
+u\in_R \mathbb{Z}_n & & \\
+a \gets g^u & \xrightarrow{\hspace{1em}a\hspace{1em}} & \\
+& & c\in_R \{0,1\} \\
+& \xleftarrow{\hspace{1em}c\hspace{1em}} & \\
+r\gets_n\begin{cases}
+\begin{array}{l l}
+u, & \text{if}\ c=0 \\
+u + x, & \text{if}\ c=1 
+\end{array}
+\end{cases} & \xleftarrow{\hspace{1em}r\hspace{1em}} & g^r \stackrel{?}{=}
+\begin{cases}
+\begin{array}{l l}
+a, & \text{if}\ c=0 \\
+ah, & \text{if}\ c=1
+\end{array}
+\end{cases}
+\end{array}
+\]
+\end{document}

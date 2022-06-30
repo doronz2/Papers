@@ -1,0 +1,124 @@
+\documentclass[]{article}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage{xcolor}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{mathtools}
+\usepackage{float}
+
+\newcommand\getr{\stackrel{\mathclap{\normalfont\mbox{\tiny R}}}{\gets}}
+%\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\comment}[1]{{\textcolor{red}{[Comment: #1]}}}
+
+\title{Submit and Claim}
+
+
+\begin{document}
+	\maketitle
+	
+	
+	
+	\section{Motivation}
+	Secure Mixnet is a family of protocols that provides anonymity to a list of inputs, by privately permute their order of arrival. The secure mix-net constructions require the involvement of non-colluding mix-servers. In most cases outside server are responsible for the mix, while in some setting the senders themselves do the mix~\cite{ryan2016crypto}.
+	The privacy of a mix-net is based on the assumption that there exists at least a single non-colluding party who does not reveal the permutation performed by her. In reality, for practical reasons, mix-servers are sometimes run by the same semi-trusted party (e.g., Norwegian electronic trial elections) where privacy is ensured under the assumption that the semi-trusted party remained honest. 
+	
+	
+	
+	In this work we replace this strong assumption by a weaker assumption that distributed key generation is performed by a semi-trusted parties (more precisely, that there is at least one honest party), and we remove the trust from the parties who does the actual shuffle. The reason for this "selective" trust is due to two factors:
+	the extensive development of trusted executed environment (TEE), which is a secure area inside a main processor which guarantees that the code and data loaded in the TEE are private and cannot be accessed by the operating system. Complex protocols such as mixnet are much harder to implement on TEE and incurs cost of $O(n)$ inside the TEE (which performs worse than the default CPU), where n is the size of the input. The other reason is that Mixnet can be subject to denial of service, where one of the servers does not cooperate which halts the entire process.
+	
+	
+	In this proposal we present several schemes that are Mixnet-like, which does not assume any trusted party to permute the input.  Instead, each sender is responsible for the shuffle of its own input. We call such schemes Self-mixing. To this end, we propose several possible construction:
+	\section {Submit-and-claim}
+	In this approach we assume the existence of an anonymous channel to obfuscate the link between the incoming and the out going messages. Here, the senders publish their commitments to the votes on the bulletin board, and then some source (presumably, unlinkable to the senders) publishes their votes on their behalf together with a proof which shows that the published vote is associates with one of the published commitments. This scheme consists of two phases:
+	\begin{enumerate} 
+		\item  The "voting" phase: The parties commit to their votes and publish the commitments on the bulletin board. We denote this set of commitments by L.
+		\item The "claiming the vote" phase: some source publishes a vote v (in plaintext), a nullifier u (some unique random value), and a ZK-proof $\pi = Prove(v,u,L)$  which proves that the commitment to v and u lies within the set $L$.
+	\end{enumerate}
+	The reason for the use of a nullifier is to prevent double voting. We assume anonymous channel so that the voter identity cannot be linked to the one who create the proof of vote in the second phases.
+	A practical way of obtaining this unlikability property can be realized by onion routing such as Tor network or via complex peer to peer (e.g.,the underlying p2p of some blockchain).
+	%note, given this assumption we can construct a traditional mixed network by splitting the encryption key of each party with the mixers).
+	We present here two schemes that achieve this goal. 
+	%The first one is based ring signature.
+	% \begin{enumerate}
+		%\item 
+		
+		
+		
+		% For the relation $\mathbb{R}_{OR}$, where:
+		%\[
+		%\mathbb{R}_{OR}  = \left\lbrace  ((b,x),(	c_1,...,c_n))\in ([0,n]\times (X_1\cup X_2)\times (C_1\times %...\times C_n))\right\rbrace 
+		%	\]
+		%	\end{enumerate}
+	%Let $g_1\in \mathbb{G1}$ and $g_2\in \mathbb{G2}$ be two element groups.  
+	%	Suppose Alice has a secret key $sk\in Z_n$ and public key $h=g_1^{sk}$. She want to encypt her vote $M = g_2^M$ using the exponent variation of El-Gamal encryption by computing $(c_1,c_2) = (g_1^r,h^rM)$. The following Sigma protocol proves that Alice used the vote m and her private key to compute $c_2 = h^rM$:
+	%	\[
+	%	\begin{array}{c c c}
+		% 	\text{\textsf{Voter}} & & \text{\textsf{Server}} \\
+		
+		%	\alpha_t \getr Z_q  & & \\
+		%	\beta_t  \getr Z_q  & &\\
+		%	u_t = g_1^{\alpha_t} g_2^{\beta_t} &\xrightarrow{\hspace{1em}u_t\hspace{1em}} & \\
+		%	& & c\getr Z_q \\
+		%	& \xleftarrow{\hspace{1em}c\hspace{1em}} & \\
+		%\alpha_z = \alpha_t +sk*c  & & \\
+		%\beta_z = \beta_t +m*c   & \xrightarrow{\hspace{1em}\alpha_z, \beta_z\hspace{1em}} & \\
+		%\end{array}
+		%	\]
+		%The server can now verify that Alice encrypted M by checking that $g_1^{\alpha_z} g_2^{\beta_z} =u_z c_2^c$.
+		
+		
+		
+		%	 	 The submit and claim system contains four separate algorithms, and exists in the three party model consisting of an voter, server, and election authority (EA). The system is consist by the following algorithms:
+		We now present two type of protocols:
+		\subsection{Submit and claim based on Ring signatures}
+		The first protocol of the submit and claim system is based on ring signature. Ring signature is a scheme that specify a set of possible signers and convinces a verifiers  that a message was signed by one of these signers without revealing the identity of the sginer. Formally, given secret key $x_i$ and a set of public keys $P=\{P_1,...,P_K\}$, the signer produces a proof $\pi_i$ such that $Ver(\pi, P_1,...,P_K)=1$ if there exist a public key $P_i\in P$ that is associated with $x_i$. 	Several scheme are based on the knowledge of discrete log 	(e.g.,  AOS ring signature ~\cite{abe20041}), i.e., the knowledge of some secret field element $x_i$ corresponds to the public key $g^{x_i}$. 
+		
+		The use of ring signature here is as follows. Let $\mathbb{G}$ 
+		be a cyclic group and let $g$ be a generator of $\mathbb{G}$ and $h$ is a random element in $\mathbb{G}$. 
+		To submit a vote each party computes a Pedersen commitment to a value $v_i = H(l_i||u_i)$ where $l_i$ is the vote and $u_i$ is some random unique nonce, called "nullifier" and with secret key $sk_i$, and a voter publishes a commitment $c_i = g^{sk_i}h^{v_i}$ ($sk_i$ is noramally used in a Pedersen commitment as a random value). In the second phase each party submits a ring signature proof of the knowlede of the discrete log of one of the commitments $c_1,...,c_n$. 	We now describe the scheme formally:
+		\begin{enumerate}
+			\item {\bf KeyGen}: the voter generate a secret key $sk_i$.  
+			\item {\bf SubmitVote}: voter $i$ selects a candidate $l_i\in [1..n]$, generates a nullifier $u_i \getr Z_q$, computes the hash $v_i = H(l_i||u_i)$ and a Pedersen commitment $c_i = g^{sk_i}h^{v_i}$. Then it publishes $c_i$ on the bulletin board.
+			\item {\bf Claim vote}: voter $i$ does the following:
+			\begin{enumerate}
+				\item computes a set of public keys for a ring signature, that is for each $j\in n$ (including $j=i$) , $pk_{j,i} = c_j h^{ - v_i}$. Let $L_i  = \{pk_{1,i},...,pk_{n,i}\}$ be the list of public keys modified by $i$.
+				\item computes the ring signature $\sigma_i  = S_{sk_i}(Li)$ signed by secret key $sk_i$.
+				\item publishes {\bf through anonymous channel} the tuple $(\sigma_i, l_i,u_i)$ to the bulletin board
+			\end{enumerate}
+			\item {\bf Tallying} 
+			A server maintains a set $U$ of all nullifiers that were submitted so far.  The goal of $U$ is to ensure that no voter would vote twice. First, the servers set $U \gets \emptyset$.
+			For each ballot $i$ recorded in the bulleting board, the server does the following:
+			\begin{enumerate}
+				\item parse $(\sigma_i, u_i, b_i)$. If $u_i\in U$ then abort. Otherwise, 
+				\begin{enumerate}
+					\item 	update the nullifier set $U = U\cup u_i$.
+					\item compute $v_i = H(l_i||u_i)$
+					\item construct the set $L_i$ that contains a list of modified public keys (where each modified public key  $pk_{j,i} = c_i h^{ - v_i}$  as done by the voter).
+					\item invoke the verification algorithm $V$ (associated with the ring signature scheme) and add the vote if $accept = V(\sigma_i,L_i)$
+				\end{enumerate}
+			\end{enumerate}
+		\end{enumerate}
+		
+		\begin{itemize}
+			\item Public verifiability.  Voter $i$ submits a commitment $c_i = g^{sk_i}h^{v_i}$.
+			Next the voter computes the modified public key (commtiments) of all voters by $c'_{ij} = c_{j}*h^{-v_i}$. It follows that $c_{ii} = g^{sk_i}$ and $c_{ij} = g^{sk_j}h^{v_j-v_i}$, for $j \neq i$.
+			Since all $c_{ij}$ are elements of a cyclic group generaed by $g$ (as $h$ is also in $\mathbb{G}$), we can use a discret log ring signature (such as., ~\cite{AOS}), to prove that the signer knows $sk_i$ that generates one of the public keys.
+			\item zero knowledge  - 	Since a hash is modeled a random oracle the field elements $v_i$ and $v_j$ and $v_i-v_j$ are indistiguuishable from random. Therfore,the group element  $h^{v_j-v_i}$ is indistiguishable from random. Hence the  public key $c_{ij}=  g^{sk_j}h^{v_j-v_i}$ is indistigushable from random group element.	 
+			\item Soundess/Existential unforgability (check proof iin Theorem 5, AOS). Let $C_i= \{c_{i1},...,c_{in}\}$ and $\pi_i$ be the modified publid key published ad proof published by voter $i$. By lemma (the previos one) , the sequence $C_i$ is indistinguishable from random, and all element are group element in $\mathbb{Gt}$, each $c_ij$ is indistiguishable from group element $g^{r_i}$ for random $r_i\in Z_q$. Hence, by Theorem 5 in AOS, the signature in exitential unforgability.
+		\end{itemize}
+		
+		\subsection{General circuits}
+		Another possible scheme is the use of general circuit ZK-proof (e.g., zk-SNARK) which requires a relatively smaller proof size and verification time (both logarithmic or even constant in the size of the NP statement) but at the cost of a computationally heavy  proof construction (and in some proof systems - trusted setup).
+		Now, in the first phase, each voter $i$ can publish a commitment $c_i = H(v_i,u_i,sk_i)$   , where $v_i, u_i$ , and $sk_i$ is respectively the vote, nullifier and secret key of voter i  (the hash function can be as complex as SHA-256, but other commitments proof -system friendly are preferable). After all commitments have been published, some (untrusted) server constructs a public Merkle tree from the set $(c_1,...,c_k)$. Let R denote the Merkel root of this tree. 
+		In the second phase, each voter $i$ claims the vote (or any source on the behalf of the voter) by publishing $(u_i, v_i,\Pi_i)$ which proves that there exists some leaf $c_i$ (without specifying  $c_i$) that is descendant of R (the branch of the Merkle tree is provided as a witness as well) and $c_i = H(v_i,u_i,sk_i)$ was correctly computed. 
+		
+		%In case of faulty computation in the homomorphic tallying, which can be verified (simply check that the sum of cipher-texts does not match the result), another round of tallying can be prompted that indicates the location of the faulty computation. That could be realized by a sequential computation in a tree-like form, where in step i each tally combines a subset of $2^i$ of the ciphertext.
+		\bibliographystyle{abbrv}
+		\bibliography{refs}
+\end{document}}}

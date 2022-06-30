@@ -1,0 +1,179 @@
+\documentclass[]{article}
+\usepackage{amsfonts}
+
+%opening
+\title{E-voting for representatives}
+\author{Doron Zarchy}
+
+\begin{document}
+
+\maketitle Subsenate: a scalable and secure election scheme 
+
+\begin{abstract}
+ E-voting systems that runs many elections may not scale as more users participate in the process.  
+We propose Subsenate, a scalable scheme for voting over blockchain which grants permission to vote only for a random subset of the registered voters. Assuming honest majority, Subsenate is robust against an adversary who attempts to manipulate the election outcome. Subsenate hides the identities of eligible voters and of those who already voted. In a setting where the election outcome depends on outside events (e.g., oracles to smart contracts), Subsenate incentivise truthful behavior by rewarding only the voters whose ballots are among the majority.
+\end{abstract}
+
+\section{motivation}
+A decentralized E-voting system that scales to many users is desirable. There are many use cases for such setting e.g., determine outcome in prediction markets, smart contract could connect to an outside environment, and open disputes could be judged by the community. However, a system that runs many elections at high rate with many users (and as a result consume many resources in blockchain) may not scale. Therefore, we propose a specialize voting system where only a subset of the users is allowed to vote. The mechanism grants equal chance for each user to get elected and is secure (i.e., to adversaries who tries to increase the chance that specific users will grant permission to vote). The voters who vote with the majority are rewarded as to incentivise a truthful vote (i.e.). The selected voters should not be exposed to the other users (as to prevent bribery/coercion). 
+Specifically, there are few challenges/questions with this approach:
+\begin{enumerate} 	
+	\item How to select the users in an agreed way while keeping their identities hidden (their public key)
+	\item How to reward users while keeping their identity hidden?
+	\item If one of the users is the creator of the election to be voted upon, e.g., when the resolution of the voting initiates a smart contract,	then how to hide it's identity (as to keep the voting neutral as possible)?
+	\item Non-crypto question: what is the bias 
+\end{enumerate}
+
+\section{Security Requirements}
+\begin{enumerate}
+	\item The subset of eligible voters is hidden
+	\item All the registered voters should be oblivious to:
+		\begin{enumerate}
+			\item the users who were chosen as the voters
+			\item the voters who received the reward
+		\end{enumerate}
+\end{enumerate}
+
+
+	\section{Steps of the protocol}
+The following steps are published in a blockchain.
+\begin{enumerate}
+	\item Any user who wants to participate in the election process should register to the system This can be done via transaction to a smart contract
+	\item When someone wants to create an election it publishes it's content, the list of alternatives to vote on, the majority type (simple or $\alpha$) , the fee that the voters are going to vote on, and other conditions. The election creator lock this fee.
+	\item After election has been set, some of the users compute a random seed 
+	\item All users who are chosen with regard to the random seed publish a proof for that and includes their vote
+	\item The majority of users receive the fee that the election creator has locked. 
+	\item The winner of the election (e.g., of some dispute) grants a permission to unlock some money from the system/gain some right via smart contract
+\end{enumerate}
+\section{Assumptions}
+\begin{enumerate}
+	\item Assumption. Honest majority
+\end{enumerate}
+\section{Registering the system}
+Each user who register the system is a potential voter. The users sends a transaction to a smart contract that contain the following:
+\begin{enumerate}
+\item k coins (where k is defined by the smart contract) which serves as a collateral
+\end{enumerate}
+\section{Election Creation}
+When user creates an election in may invokes a smart contract that specify the following:
+\begin{enumerate}
+	\item a collateral that will be distributed among the honest voters
+	\item type of election rule: 
+	\begin{enumerate}
+		\item simple majority, i.e., candidate who received most of the ballots (if there are two candidate then its a simple majority)
+		\item  super-majority, defined by a parameter $\alpha$, in which case  the election is finalized only if  more than $\alpha$-fraction of the voters voted to some candidate.
+	\end{enumerate}
+	\item the duration where voter will be allowed to vote. Specifically, the smart contract sets $t_1$ and $t_2$ for which voter's vote is considered only between blocks $t_1$ and $t_2$.  
+	\item the size, in expectation, of the subset of voters $N$ 
+	\item (*) a URL whose website contains content of the election/dispute. 
+	\item list of candidates
+\end{enumerate}						
+\section{Adjusting the size of the subset}
+Suppose that expected size of the subset is $\Phi$. The system constantly adjust $\Phi$ so that if the number of users who actually voted is smaller than $N$ then $\Phi$ is increased, otherwise it is decreased (there may be a complex mechanism which takes an average of the history, etc.).
+In this case all users are allowed to vote. In order to hide them, mixed network can be used.											
+
+	
+		
+\section{Voting}
+The Subsenate system does not expose  the link between the voter and her commitment. The attestation to the commitment is done via zkSNARK.  
+Since the voter cannot send her vote in plaintext ()as it would expose the voter), she sends a commtiment to her vote. The commitment has to be both hiding and binding. In addition, since an honest voter is rewarded for her vote and the reward recipient address $pk_{new}$ needs to be kept hidden, the commitment also contains $pk_{new}$.
+Specifically, the vote happens in two phases:
+\subsection{Committing to the votes}
+When a user register the election, she commits the her vote $v$ as follows:
+
+\begin{enumerate}
+	\item Select secret key $sk_{new}$ uniformly from $\mathbb{F}_N$.
+	\item Derive the new public key (for the subsequent address),  $pk_{new} = g^{sk_{new}}$, where $g\in \mathbb{G}$ is a generator of a multiplicative group.
+	\item Select nonces $t$ and $r$ uniformly from $\mathbb{F}_N$.
+	\item Select nullifier $u$ uniformly from $\mathbb{F}_N$.
+	\item Computes $cm = H(v,pk_{new},t,r,u)$
+	\item Send $cm$ and $u$ to the smart contract
+\end{enumerate}
+
+we need the nullifier $u$ to guarantee that all votes are unique (as in Zcash), 
+\subsection{Selecting the Subset}
+A user is eligible voter if $H(RS,t)<N$ where $t$ is the nonce that the user committed to in phase one, and RS is a random seed. RS should be secure against a manipulation of an adversary.  To guarantee this security it is computed by multiple parties as follows:
+\begin{enumerate}
+	\item k users publish their commitment $c_1,...,c_k$ at  time  $T_1$ and $T_2$ (where $T_1$ and $T_2$ are determined by the smart contract of the election creator).
+	\item l out of k users (any subset of the k users who participate) publish the preimages  $o_1,...,o_l$. The time that is allowed to publish is between $T_3$ to $T_4$ 
+	\item $RS$ is publicly computed as $H(o_1,...,o_l)$.
+\end{enumerate}
+
+\subsection{zkSNARK statement}
+Given the public key derived from the circuit, the voter generates a zkSNARK proof $\Pi = (\Pi_1,\Pi_2,\Pi_3)$ for the following three NP statements:
+\begin{enumerate}
+	\item $cm = H(v,pk_{new},t,r,u)$ where $cm$ is the commitment published in the smart contract when the voter registers the election. The voter proves her identity by showing that she knows random nonces $r$ and $t$.
+	\item $Root = \mathbb{H}(mp, cm)$. Proving that $cm$ is a member in the set of commitments by proving that the Merkle root is a result of the hashing $cm$ and the witness (Merkle path) . The Merkle root is public.
+	\item $H(RS,t)<N$ proves that the voter is eligible.
+\end{enumerate}
+where the public input is:
+\begin{enumerate}
+	\item Root: Merkle root of the commitment set
+	\item u: a nullifier
+	\item v: vote  
+	\item $pk_{new}$: voter's new address
+	\item N: expected number of voters
+	\item RS: random seed
+\end{enumerate}	
+and private input:
+\begin{enumerate}
+	\item cm: commitment to the vote
+	\item mp: a Merkle path from cm to root
+	\item t: random nonce
+	\item r: random nonce
+\end{enumerate}	
+The voter publishes ($\Pi,u,v$). Note that if the verifier does not sign the proof as she exposes herself being selected.
+
+
+\section{Verifying the proof}
+The verifier does the following:
+\begin{itemize}
+	\item construct a Merkle tree based on the vote commitments $cm_1,...,cm_k$  listed in the smart contract of the election (with their defined order). and derive Root. 
+	\item compute the random seed RS
+	\item Given the verification key and the proof $\Pi$ and N which determined in the election's smart contract the verifier verifies the proofs.
+\end{enumerate}
+Note that the verification time is linear in the security parameter $k$ (note that it's possible to improve the verification time and the communication complexity by using verifiable delay function ~\cite{}). 
+
+\section{Miner rewarding the voters}
+Since the votes are public, the winner is known publicly. Although the miner don't know the identities of the winner votes, they know the commitments correspond to the winners, and hence the nullifier associated with the commitments.  The miners reward the accounts with the "winner" nullifier (which serves as an address)
+\section{Claiming Rewards}
+If a voter is within the majority (of stakes) then it receives the fees + the collateral and if its within the minority then loses all the locked coins. 
+
+Claiming reward cannot publicly attach a public address to a vote, as it exposes the voter. In order to prove that the reward is only claimed once, a nullifier (seems to be) a deterministic function some of the above parameters.
+%E.g. a leaf in a Merkle Tree (or an element in an accumulator). Hence, lets (suppose) the nullifier is $N_i = H(P_{SK},R_S,l)$ where l is some public that is published with the vote  
+As described above, a  nullifier is one of the building blocks of the commitment. Hence, in order to claim the reward, a proof which shows that it knows the witness $R_i$ (or simply the preimage of $c_i$) is sufficient.
+
+\section{Hiding the identity of the election creator (EC)}
+The EC may hide it's identity by creating a fresh address. In order to maintain its anonymity after the elections, the EC may publish on
+
+\section{The outcome of the elections}
+The result of the elections should affect the smart contract initiated by the EC. Specifically, EC locks coin is a special address, and the result 
+Suppose Alice is the EC. Alice locks coins in a special address. 
+, we shall call as well as others (e.g., someone who is in dispute with) may lock coins in addresses.    
+
+
+
+
+{\bf theorem}
+	Given a disputed contract over x dollars. Suppose the adversary controls p (fraction) of the stakes, where $1-S_p<\frac{1}{2}$ . Suppose there is a consensus about the outcome, i.e., k=1, that is 100 percent of all the users have the same opinion about the output. In order to achieve "truthfulness" of probability p=0.99, there should be $l=xxx$ reviewers. 
+
+\section{Disincentivize Attacks}
+In order to disincentivize the adversary to "attack" the system (i.e., to vote not "truthfully" or bribe others to do so) and later sell all the stakes, 
+We can force (by consensus) the stake transfers be performed only after sufficient amount of time . 
+
+\section{Exposing the real Person's Identity to Prevent Double Spend}
+Each user will be registered and at least x random people should validate that it's a real person. The user's identity detail are kept (i.e., a photo, id card, etc.) in the system, but it would be very hard to connect it to the user's public key. Some fixed virtual id (which is not connected to a user) should be connected to a user, which should allow rating (that is, each user will be able to create black/white list). However, this will clearly hurt privacy.
+
+
+\section{Q and A}
+\begin{itemize}
+	\item Q: Does choosing a subset is for security reasons? A: I think not. The idea here is that given that we want to choose a subset, then how to keep the anonymization.
+	\item Isn't it subject to attacks? Yes it is. The assumption is that when the number of active voters is very high then either the adversary will not have majority of stakes or it will not want to lose it's stakes (as the election and its results are published and it's credibility can be questioned).
+\end{itemize} 
+Open questions (for me).
+\begin{enumerate}
+	\item If the voter need to pay then how would we hide their identity.
+	\item Should the vote be separated from the vote? 
+	\item How to protect from denial of service? Theoretically, attacker can craft many massages that are not validated.
+\end{enumerate}
+\end{document}
